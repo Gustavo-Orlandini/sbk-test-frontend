@@ -38,7 +38,7 @@ const lightPalette: ThemeOptions['palette'] = {
         dark: '#1b5e20',
     },
     background: {
-        default: '#f5f5f5',
+        default: '#e8e8e8',
         paper: '#ffffff',
     },
     text: {
