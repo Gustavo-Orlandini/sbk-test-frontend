@@ -10,7 +10,8 @@ export const ProcessListItem = ({ process }: ProcessListItemProps) => {
     const navigate = useNavigate();
 
     const handleClick = () => {
-        navigate(`/processos/${process.id}`);
+        // Use case number (numero) for navigation since API uses caseNumber
+        navigate(`/processos/${process.numero}`);
     };
 
     const formatDate = (dateString: string) => {

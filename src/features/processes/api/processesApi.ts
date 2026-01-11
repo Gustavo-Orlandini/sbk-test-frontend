@@ -3,7 +3,10 @@ import type {
     Process,
     ProcessesListParams,
     ProcessesListResponse,
+    ApiProcessesListResponse,
+    ApiProcessDetailResponse,
 } from '../types';
+import { mapProcessesListResponse, mapApiDetailToProcess } from './mappers';
 
 /**
  * API Client for legal processes
@@ -16,28 +19,31 @@ export const processesApi = {
      */
     async list(params: ProcessesListParams = {}): Promise<ProcessesListResponse> {
         try {
-            const response = await apiClient.get<ProcessesListResponse>('/processos', {
+            // Convert grau from PRIMEIRO/SEGUNDO to G1/G2 for API
+            const grauApi = params.grau === 'PRIMEIRO' ? 'G1' : params.grau === 'SEGUNDO' ? 'G2' : undefined;
+
+            const response = await apiClient.get<ApiProcessesListResponse>('/lawsuits', {
                 params: {
                     search: params.search,
                     tribunal: params.tribunal,
-                    grau: params.grau,
+                    grau: grauApi,
                     cursor: params.cursor,
                     limit: params.limit || 20,
                 },
             });
-            return response.data;
+            return mapProcessesListResponse(response.data);
         } catch (error) {
             throw handleApiError(error);
         }
     },
 
     /**
-     * Get a specific process by ID
+     * Get a specific process by case number
      */
-    async getById(id: string): Promise<Process> {
+    async getByCaseNumber(caseNumber: string): Promise<Process> {
         try {
-            const response = await apiClient.get<Process>(`/processos/${id}`);
-            return response.data;
+            const response = await apiClient.get<ApiProcessDetailResponse>(`/lawsuits/${caseNumber}`);
+            return mapApiDetailToProcess(response.data);
         } catch (error) {
             throw handleApiError(error);
         }
@@ -45,10 +51,11 @@ export const processesApi = {
 
     /**
      * Get available court options (for filters)
+     * TODO: Update endpoint when available in backend
      */
     async getTribunais(): Promise<string[]> {
         try {
-            const response = await apiClient.get<string[]>('/processos/tribunais');
+            const response = await apiClient.get<string[]>('/lawsuits/tribunais');
             return response.data;
         } catch (error) {
             throw handleApiError(error);

@@ -4,10 +4,11 @@ import { LoadingSpinner } from '@/shared/components/LoadingSpinner';
 import { ErrorState } from '@/shared/components/ErrorState';
 
 interface ProcessDetailProps {
-    id: string;
+    id: string; // caseNumber from route
 }
 
 export const ProcessDetail = ({ id }: ProcessDetailProps) => {
+    // id is actually the caseNumber (numero do processo)
     const { process, loading, error, refetch } = useProcess(id);
 
     const formatDate = (dateString: string) => {

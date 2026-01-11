@@ -1,7 +1,8 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { processesApi } from '../api/processesApi';
 import type { ApiError } from '@/shared/api/client';
 import type { ProcessListItem, ProcessesListParams, ProcessesListResponse } from '../types';
+import { useToast } from '@/shared/hooks/useToast';
 
 interface UseProcessesReturn {
     processes: ProcessListItem[];
@@ -22,8 +23,15 @@ export const useProcesses = (initialParams?: ProcessesListParams): UseProcessesR
     const [nextCursor, setNextCursor] = useState<string | undefined>();
     const [currentParams, setCurrentParams] = useState<ProcessesListParams | undefined>(initialParams);
     const [initialized, setInitialized] = useState(false);
+    const { showError, showSuccess } = useToast();
+    const toastRef = useRef({ showError, showSuccess });
 
-    const fetchProcesses = useCallback(async (params: ProcessesListParams, append = false) => {
+    // Keep toast refs updated
+    useEffect(() => {
+        toastRef.current = { showError, showSuccess };
+    }, [showError, showSuccess]);
+
+    const fetchProcesses = useCallback(async (params: ProcessesListParams, append = false, silent = false) => {
         setLoading(true);
         setError(null);
 
@@ -32,14 +40,23 @@ export const useProcesses = (initialParams?: ProcessesListParams): UseProcessesR
 
             if (append) {
                 setProcesses((prev) => [...prev, ...response.data]);
+                if (!silent && response.data.length > 0) {
+                    toastRef.current.showSuccess(`${response.data.length} processo(s) carregado(s) com sucesso`);
+                }
             } else {
                 setProcesses(response.data);
+                // Only show success toast if there are results and it's not the initial silent load
+                if (!silent && response.data.length > 0) {
+                    toastRef.current.showSuccess(`${response.data.length} processo(s) encontrado(s)`);
+                }
             }
 
             setHasMore(response.hasMore);
             setNextCursor(response.nextCursor);
         } catch (err) {
-            setError(err as ApiError);
+            const apiError = err as ApiError;
+            setError(apiError);
+            toastRef.current.showError(apiError.message || 'Erro ao carregar processos');
             if (!append) {
                 setProcesses([]);
             }
@@ -50,14 +67,14 @@ export const useProcesses = (initialParams?: ProcessesListParams): UseProcessesR
 
     const loadMore = useCallback(() => {
         if (!loading && hasMore && nextCursor && currentParams) {
-            fetchProcesses({ ...currentParams, cursor: nextCursor }, true);
+            fetchProcesses({ ...currentParams, cursor: nextCursor }, true, false);
         }
     }, [loading, hasMore, nextCursor, currentParams, fetchProcesses]);
 
     const refetch = useCallback((params?: ProcessesListParams) => {
         const newParams = params || currentParams || {};
         setCurrentParams(newParams);
-        fetchProcesses(newParams, false);
+        fetchProcesses(newParams, false, false);
     }, [currentParams, fetchProcesses]);
 
     const reset = useCallback(() => {
@@ -74,7 +91,8 @@ export const useProcesses = (initialParams?: ProcessesListParams): UseProcessesR
             setInitialized(true);
             const paramsToUse = initialParams ?? {};
             setCurrentParams(paramsToUse);
-            fetchProcesses(paramsToUse, false);
+            // Silent initial load - no toast on first render
+            fetchProcesses(paramsToUse, false, true);
         }
     }, [initialParams, initialized, fetchProcesses]);
 

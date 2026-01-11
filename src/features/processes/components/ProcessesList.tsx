@@ -1,5 +1,5 @@
-import { useState, useCallback } from 'react';
-import type { ChangeEvent, KeyboardEvent } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
+import type { ChangeEvent } from 'react';
 import {
     Box,
     TextField,
@@ -26,25 +26,61 @@ const GRAU_OPTIONS = [
     { value: 'SEGUNDO', label: 'Segundo Grau' },
 ];
 
+const DEBOUNCE_DELAY = 800; // 800ms delay for search to reduce API calls
+
 export const ProcessesList = () => {
     const [search, setSearch] = useState('');
     const [tribunal, setTribunal] = useState('');
     const [grau, setGrau] = useState<ProcessesListParams['grau'] | ''>('');
 
     const { processes, loading, error, hasMore, loadMore, refetch } = useProcesses();
+    const searchTimeoutRef = useRef<number | null>(null);
+    const isFirstRender = useRef(true);
+    const refetchRef = useRef(refetch);
 
-    const handleSearch = useCallback(() => {
-        refetch({
-            search: search || undefined,
-            tribunal: tribunal || undefined,
-            grau: grau || undefined,
-        });
-    }, [search, tribunal, grau, refetch]);
+    // Keep refetch ref updated
+    useEffect(() => {
+        refetchRef.current = refetch;
+    }, [refetch]);
+
+    // Debounced search effect
+    useEffect(() => {
+        // Skip first render to avoid duplicate initial fetch
+        if (isFirstRender.current) {
+            isFirstRender.current = false;
+            return;
+        }
+
+        // Clear previous timeout
+        if (searchTimeoutRef.current) {
+            clearTimeout(searchTimeoutRef.current);
+        }
+
+        // Set new timeout for search
+        searchTimeoutRef.current = setTimeout(() => {
+            refetchRef.current({
+                search: search || undefined,
+                tribunal: tribunal || undefined,
+                grau: grau || undefined,
+            });
+        }, DEBOUNCE_DELAY);
+
+        // Cleanup on unmount
+        return () => {
+            if (searchTimeoutRef.current) {
+                clearTimeout(searchTimeoutRef.current);
+            }
+        };
+    }, [search, tribunal, grau]);
 
     const handleClear = useCallback(() => {
         setSearch('');
         setTribunal('');
         setGrau('');
+        // Clear timeout and refetch immediately
+        if (searchTimeoutRef.current) {
+            clearTimeout(searchTimeoutRef.current);
+        }
         refetch({});
     }, [refetch]);
 
@@ -66,11 +102,6 @@ export const ProcessesList = () => {
                         placeholder="Digite o número do processo, classe, assunto..."
                         value={search}
                         onChange={(e: ChangeEvent<HTMLInputElement>) => setSearch(e.target.value)}
-                        onKeyPress={(e: KeyboardEvent<HTMLInputElement>) => {
-                            if (e.key === 'Enter') {
-                                handleSearch();
-                            }
-                        }}
                         InputProps={{
                             startAdornment: <Search sx={{ mr: 1, color: 'text.secondary' }} />,
                         }}
@@ -110,12 +141,9 @@ export const ProcessesList = () => {
                     </Grid>
                 </Grid>
 
-                <Box display="flex" gap={2}>
-                    <Button variant="contained" onClick={handleSearch}>
-                        Buscar
-                    </Button>
+                <Box display="flex" justifyContent="flex-end">
                     <Button variant="outlined" onClick={handleClear}>
-                        Limpar
+                        Limpar filtros
                     </Button>
                 </Box>
             </Stack>
