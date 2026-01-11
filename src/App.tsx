@@ -1,14 +1,16 @@
-import { ThemeProvider } from '@mui/material/styles';
+import { ThemeProvider as MuiThemeProvider } from '@mui/material/styles';
 import { CssBaseline } from '@mui/material';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { SnackbarProvider } from 'notistack';
-import { theme } from './shared/theme';
+import { ThemeContextProvider, useThemeMode } from './shared/contexts/ThemeContext';
 import { ProcessesListPage } from './features/processes/pages/ProcessesListPage';
 import { ProcessDetailPage } from './features/processes/pages/ProcessDetailPage';
 
-function App() {
+function AppContent() {
+    const { theme } = useThemeMode();
+
     return (
-        <ThemeProvider theme={theme}>
+        <MuiThemeProvider theme={theme}>
             <CssBaseline />
             <SnackbarProvider
                 maxSnack={3}
@@ -25,7 +27,15 @@ function App() {
                     </Routes>
                 </BrowserRouter>
             </SnackbarProvider>
-        </ThemeProvider>
+        </MuiThemeProvider>
+    );
+}
+
+function App() {
+    return (
+        <ThemeContextProvider>
+            <AppContent />
+        </ThemeContextProvider>
     );
 }
 

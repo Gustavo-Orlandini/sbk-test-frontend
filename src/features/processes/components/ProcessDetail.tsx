@@ -85,12 +85,16 @@ export const ProcessDetail = ({ id }: ProcessDetailProps) => {
             {ultimoMovimento && (
                 <Paper
                     elevation={3}
-                    sx={{
+                    sx={(theme) => ({
                         p: 3,
                         mb: 3,
-                        backgroundColor: 'primary.light',
-                        color: 'primary.contrastText',
-                    }}
+                        backgroundColor: theme.palette.mode === 'dark'
+                            ? theme.palette.primary.dark
+                            : theme.palette.primary.light,
+                        color: theme.palette.mode === 'dark'
+                            ? theme.palette.primary.contrastText
+                            : theme.palette.getContrastText(theme.palette.primary.light),
+                    })}
                 >
                     <Typography variant="overline" display="block" mb={1}>
                         ÚLTIMO MOVIMENTO
@@ -98,7 +102,7 @@ export const ProcessDetail = ({ id }: ProcessDetailProps) => {
                     <Typography variant="h6" fontWeight="bold" mb={1}>
                         {ultimoMovimento.descricao}
                     </Typography>
-                    <Typography variant="body2">
+                    <Typography variant="body2" sx={{ opacity: 0.9 }}>
                         {formatDate(ultimoMovimento.data)} • Tipo: {ultimoMovimento.tipo}
                     </Typography>
                 </Paper>
