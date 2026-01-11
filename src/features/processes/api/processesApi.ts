@@ -22,14 +22,17 @@ export const processesApi = {
             // Convert grau from PRIMEIRO/SEGUNDO to G1/G2 for API
             const grauApi = params.grau === 'PRIMEIRO' ? 'G1' : params.grau === 'SEGUNDO' ? 'G2' : undefined;
 
+            // Build params object according to backend contract
+            // Query params: q, tribunal, grau, limit, cursor
+            const apiParams: Record<string, string | number> = {};
+            if (params.q) apiParams.q = params.q;
+            if (params.tribunal) apiParams.tribunal = params.tribunal;
+            if (grauApi) apiParams.grau = grauApi;
+            if (params.cursor) apiParams.cursor = params.cursor;
+            apiParams.limit = params.limit || 20;
+
             const response = await apiClient.get<ApiProcessesListResponse>('/lawsuits', {
-                params: {
-                    search: params.search,
-                    tribunal: params.tribunal,
-                    grau: grauApi,
-                    cursor: params.cursor,
-                    limit: params.limit || 20,
-                },
+                params: apiParams,
             });
             return mapProcessesListResponse(response.data);
         } catch (error) {

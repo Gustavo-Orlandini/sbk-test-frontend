@@ -109,7 +109,7 @@ export interface ProcessListItem {
 }
 
 export interface ProcessesListParams {
-    search?: string;
+    q?: string; // Textual search (number, parties, class, subject)
     tribunal?: string;
     grau?: 'PRIMEIRO' | 'SEGUNDO';
     cursor?: string;

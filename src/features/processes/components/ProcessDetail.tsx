@@ -33,9 +33,11 @@ export const ProcessDetail = ({ id }: ProcessDetailProps) => {
         return null;
     }
 
-    const partesAtivas = process.partes.filter((p) => p.tipo === 'ATIVO');
-    const partesPassivas = process.partes.filter((p) => p.tipo === 'PASSIVO');
-    const ultimoMovimento = process.movimentos[process.movimentos.length - 1];
+    const partesAtivas = process.partes?.filter((p) => p.tipo === 'ATIVO') || [];
+    const partesPassivas = process.partes?.filter((p) => p.tipo === 'PASSIVO') || [];
+    const ultimoMovimento = process.movimentos && process.movimentos.length > 0
+        ? process.movimentos[process.movimentos.length - 1]
+        : process.ultimoMovimento;
 
     return (
         <Box>
@@ -211,7 +213,7 @@ export const ProcessDetail = ({ id }: ProcessDetailProps) => {
             )}
 
             {/* Histórico de Movimentos */}
-            {process.movimentos && process.movimentos.length > 0 && (
+            {process.movimentos && Array.isArray(process.movimentos) && process.movimentos.length > 0 && (
                 <Paper elevation={2} sx={{ p: 3 }}>
                     <Typography variant="h6" gutterBottom fontWeight="bold">
                         Histórico de Movimentos

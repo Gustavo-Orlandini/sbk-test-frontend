@@ -24,11 +24,17 @@ export interface ApiError {
 
 export const handleApiError = (error: unknown): ApiError => {
     if (axios.isAxiosError(error)) {
-        const axiosError = error as AxiosError<{ message?: string }>;
-        const errorMessage =
-            axiosError.response?.data?.message ||
-            axiosError.message ||
-            'Erro ao processar requisição';
+        const axiosError = error as AxiosError<{ message?: string | string[] }>;
+
+        // Handle array of messages (validation errors)
+        let errorMessage: string;
+        if (Array.isArray(axiosError.response?.data?.message)) {
+            errorMessage = axiosError.response.data.message.join('. ');
+        } else if (typeof axiosError.response?.data?.message === 'string') {
+            errorMessage = axiosError.response.data.message;
+        } else {
+            errorMessage = axiosError.message || 'Erro ao processar requisição';
+        }
 
         return {
             message: errorMessage,

@@ -43,9 +43,9 @@ export const ProcessDetailPage = () => {
             <Container maxWidth="lg" sx={{ py: 4 }}>
                 <Box mb={3}>
                     <Button
+                        variant="outlined"
                         startIcon={<ArrowBack />}
                         onClick={() => navigate('/processos')}
-                        sx={{ mb: 2 }}
                     >
                         Voltar para listagem
                     </Button>
