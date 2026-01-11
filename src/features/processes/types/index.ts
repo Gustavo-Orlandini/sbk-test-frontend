@@ -13,7 +13,7 @@ export interface ApiProcessesListResponse {
 export interface ApiProcessListItem {
     numeroProcesso: string;
     siglaTribunal: string;
-    grauAtual: 'G1' | 'G2';
+    grauAtual: 'G1' | 'G2' | 'SUP';
     classePrincipal: string;
     assuntoPrincipal: string;
     ultimoMovimento: {
@@ -32,7 +32,7 @@ export interface ApiProcessDetailResponse {
     siglaTribunal: string;
     nivelSigilo: number;
     tramitacaoAtual: {
-        grau: 'G1' | 'G2';
+        grau: 'G1' | 'G2' | 'SUP';
         orgaoJulgador: string;
         classes: string[];
         assuntos: string[];
@@ -65,41 +65,57 @@ export interface Movimento {
     id: string;
     data: string;
     descricao: string;
-    tipo: string;
+    tipo: string; // código do movimento
+    orgaoJulgador?: string;
+    codigo?: string;
 }
 
 export interface Tramitacao {
     id: string;
-    local: string;
+    local: string; // orgaoJulgador
     status: string;
-    data?: string;
+    data?: string; // dataDistribuicao
+    dataAutuacao?: string;
 }
 
 export interface Process {
     id: string;
     numero: string;
     tribunal: string;
-    grau: 'PRIMEIRO' | 'SEGUNDO';
-    classePrincipal: string;
-    assuntoPrincipal: string;
+    nivelSigilo: number;
+    grau: 'PRIMEIRO' | 'SEGUNDO' | 'SUPERIOR';
+    classes: string[];
+    assuntos: string[];
+    classePrincipal: string; // First class for backward compatibility
+    assuntoPrincipal: string; // First subject for backward compatibility
     ultimoMovimento: Movimento;
     movimentos: Movimento[];
     partes: SimplifiedParte[];
     tramitacaoAtual: Tramitacao;
+    dataDistribuicao: string;
+    dataAutuacao: string;
 }
 
 export interface SimplifiedParte {
     id: string;
     nome: string;
     tipo: 'ATIVO' | 'PASSIVO';
+    tipoParte: string; // e.g., "APELADO", "APELANTE", "AUTOR", "RÉU/RÉ"
+    representantes: Representante[];
     documento?: string;
+}
+
+export interface Representante {
+    id: string;
+    nome: string;
+    tipo: string; // e.g., "ADVOGADO"
 }
 
 export interface ProcessListItem {
     id: string;
     numero: string;
     tribunal: string;
-    grau: 'PRIMEIRO' | 'SEGUNDO';
+    grau: 'PRIMEIRO' | 'SEGUNDO' | 'SUPERIOR';
     classePrincipal: string;
     assuntoPrincipal: string;
     ultimoMovimento: {
@@ -111,7 +127,7 @@ export interface ProcessListItem {
 export interface ProcessesListParams {
     q?: string; // Textual search (number, parties, class, subject)
     tribunal?: string;
-    grau?: 'PRIMEIRO' | 'SEGUNDO';
+    grau?: 'PRIMEIRO' | 'SEGUNDO' | 'SUPERIOR';
     cursor?: string;
     limit?: number;
 }

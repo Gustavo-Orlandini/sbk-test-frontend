@@ -7,17 +7,21 @@ import type {
     ApiProcessListItem,
     ApiProcessDetailResponse,
     ApiParte,
+    ApiRepresentante,
     ProcessListItem,
     Process,
     ProcessesListResponse,
     SimplifiedParte,
+    Representante,
 } from '../types';
 
 /**
- * Maps grauAtual (G1/G2) to frontend format (PRIMEIRO/SEGUNDO)
+ * Maps grauAtual (G1/G2/SUP) to frontend format (PRIMEIRO/SEGUNDO/SUPERIOR)
  */
-const mapGrau = (grauAtual: 'G1' | 'G2'): 'PRIMEIRO' | 'SEGUNDO' => {
-    return grauAtual === 'G1' ? 'PRIMEIRO' : 'SEGUNDO';
+const mapGrau = (grauAtual: 'G1' | 'G2' | 'SUP'): 'PRIMEIRO' | 'SEGUNDO' | 'SUPERIOR' => {
+    if (grauAtual === 'G1') return 'PRIMEIRO';
+    if (grauAtual === 'G2') return 'SEGUNDO';
+    return 'SUPERIOR';
 };
 
 /**
@@ -54,6 +58,17 @@ export const mapProcessesListResponse = (
 };
 
 /**
+ * Maps API representante to Representante
+ */
+const mapApiRepresentante = (representante: ApiRepresentante, index: number): Representante => {
+    return {
+        id: `representante-${index}-${representante.nome}`,
+        nome: representante.nome,
+        tipo: representante.tipo,
+    };
+};
+
+/**
  * Maps API parte to SimplifiedParte
  */
 const mapApiParte = (parte: ApiParte, index: number): SimplifiedParte => {
@@ -61,6 +76,8 @@ const mapApiParte = (parte: ApiParte, index: number): SimplifiedParte => {
         id: `${parte.polo}-${index}-${parte.nome}`,
         nome: parte.nome,
         tipo: parte.polo === 'ativo' ? 'ATIVO' : parte.polo === 'passivo' ? 'PASSIVO' : 'ATIVO',
+        tipoParte: parte.tipoParte,
+        representantes: parte.representantes.map((rep, repIndex) => mapApiRepresentante(rep, repIndex)),
     };
 };
 
@@ -69,17 +86,22 @@ const mapApiParte = (parte: ApiParte, index: number): SimplifiedParte => {
  */
 export const mapApiDetailToProcess = (apiResponse: ApiProcessDetailResponse): Process => {
     const ultimoMovimento = {
-        id: `movimento-${apiResponse.numeroProcesso}-${apiResponse.ultimoMovimento.codigo}`,
+        id: `movimento-${apiResponse.numeroProcesso}-${apiResponse.ultimoMovimento.codigo || 'last'}`,
         data: apiResponse.ultimoMovimento.data,
         descricao: apiResponse.ultimoMovimento.descricao,
-        tipo: apiResponse.ultimoMovimento.codigo,
+        tipo: apiResponse.ultimoMovimento.codigo || '',
+        orgaoJulgador: apiResponse.ultimoMovimento.orgaoJulgador,
+        codigo: apiResponse.ultimoMovimento.codigo,
     };
 
     return {
         id: apiResponse.numeroProcesso,
         numero: apiResponse.numeroProcesso,
         tribunal: apiResponse.siglaTribunal,
+        nivelSigilo: apiResponse.nivelSigilo,
         grau: mapGrau(apiResponse.tramitacaoAtual.grau),
+        classes: apiResponse.tramitacaoAtual.classes || [],
+        assuntos: apiResponse.tramitacaoAtual.assuntos || [],
         classePrincipal: apiResponse.tramitacaoAtual.classes[0] || '',
         assuntoPrincipal: apiResponse.tramitacaoAtual.assuntos[0] || '',
         ultimoMovimento,
@@ -90,6 +112,9 @@ export const mapApiDetailToProcess = (apiResponse: ApiProcessDetailResponse): Pr
             local: apiResponse.tramitacaoAtual.orgaoJulgador,
             status: 'EM_TRAMITACAO',
             data: apiResponse.tramitacaoAtual.dataDistribuicao,
+            dataAutuacao: apiResponse.tramitacaoAtual.dataAutuacao,
         },
+        dataDistribuicao: apiResponse.tramitacaoAtual.dataDistribuicao,
+        dataAutuacao: apiResponse.tramitacaoAtual.dataAutuacao,
     };
 };
